@@ -16,6 +16,7 @@ default DWIN request 5A A5 04 83 10 01 01
 
 Either of those solutions might throw an error if the byte being sent is 0x00, to go around that use prefix (byte), Serial1.write((byte)0x00);
 
+
 */
 
 int left_pot_pin = A0;
@@ -38,6 +39,8 @@ int but3state = 0;
 int but4state = 0;
 
 unsigned char Buffer[9]; //for receiving data from DWIN
+int delaytime = 16;
+int delaymillis = 16;
 
 // put function declarations here:
 //int myFunction(int, int);
@@ -91,7 +94,7 @@ if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW),
 
 //TRY TO ONLY SEND SHIT IF THERE HAS BEEN A CHANGE IN DATA?!?!
 
-
+ 
 //0x1000, left pot value, simulated block speed
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -101,8 +104,6 @@ if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW),
   Serial1.write((byte)0x00); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(map(leftpotval, 0, 1023, 0, 255)); // value
-//let's try a delay after each packet to try and stabilize things maybe?
-delay(16);
 
   //0x1001, right pot value, simulated block height indicator
   Serial1.write((byte)0x5a); // header
@@ -113,7 +114,7 @@ delay(16);
   Serial1.write((byte)0x01); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(map(rightpotval, 0, 1023, 0, 35)); // value
-delay(16);  
+ 
   //0x1002, button 1, simulated pumps state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -123,7 +124,7 @@ delay(16);
   Serial1.write((byte)0x02); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(but1state); // value
-delay(16);
+
   //0x1003, button 2, simulated ball valve state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -133,7 +134,7 @@ delay(16);
   Serial1.write((byte)0x03); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(but2state); // value
-delay(16);
+
   //0x1004, button 3, simulated pipe clamp state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -143,7 +144,7 @@ delay(16);
   Serial1.write((byte)0x04); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(but3state); // value
-delay(16);
+
   //0x1005, button 4, simulated lower clamp indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -153,7 +154,7 @@ delay(16);
   Serial1.write((byte)0x05); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(but4state); // value
-delay(16);
+
 //request data from DWIN
   Serial1.write((byte)0x5a);  //header
   Serial1.write((byte)0xa5);  //header
@@ -162,7 +163,7 @@ delay(16);
   Serial1.write((byte)0x10);  //address
   Serial1.write((byte)0x01);  //address
   Serial1.write((byte)0x01);  //number of words to return
-delay(16);
+ 
 if(Serial1.available())
   {
     for(int i=0;i<=8;i++)   //this loop will store whole frame in buffer array.
@@ -182,7 +183,7 @@ if(Serial1.available())
         }
       }
   }
-delay(16);
+delay(delaytime);
 
 //end of loop
 }
