@@ -38,9 +38,13 @@ int but2state = 0;
 int but3state = 0;
 int but4state = 0;
 
+int resetbuttonstate = 0; //DWIN on-screen reset button
 unsigned char Buffer[9]; //for receiving data from DWIN
 int delaytime = 2;
 int delaymillis = 16;
+int resetresetmillis = 10000;
+int startmillis = 0;
+int currentmillis = 0;
 
 // put function declarations here:
 //int myFunction(int, int);
@@ -49,6 +53,7 @@ int delaymillis = 16;
 void setup() {
   Serial.begin(115200); //for PC debug (USB Serial)
   Serial1.begin(115200); //for DWIN comms (TX/RX pins Serial)
+  startmillis = millis();
 
   pinMode(left_pot_pin, INPUT);
   pinMode(right_pot_pin, INPUT);
@@ -78,6 +83,9 @@ but2state = !digitalRead(but_2_pin);
 but3state = !digitalRead(but_3_pin);
 but4state = !digitalRead(but_4_pin);
 
+if (resetbuttonstate == 1) {digitalWrite(r_led_pin, HIGH);}
+if (resetbuttonstate == 0) {digitalWrite(r_led_pin, LOW);}
+
 if (but1state == 1) {digitalWrite(r_led_pin, HIGH);}
 if (but1state == 0) {digitalWrite(r_led_pin, LOW);}
 
@@ -88,6 +96,23 @@ if (but3state == 1) {digitalWrite(g_led_pin, HIGH);}
 if (but3state == 0) {digitalWrite(g_led_pin, LOW);}
 
 if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW), digitalWrite(g_led_pin, LOW);}
+
+ currentmillis = millis();  //get the number of milliseconds since the program started
+  if ((currentmillis - startmillis >= resetresetmillis) && (resetbuttonstate == 1))  //test whether the period has elapsed
+  {
+    //0x2002, reset the on-screen button to default and the arduino 
+  Serial1.write((byte)0x5a); // header
+  Serial1.write((byte)0xa5); // header
+  Serial1.write((byte)0x05); // number of bytes being send
+  Serial1.write((byte)0x82); // send/set VP  
+  Serial1.write((byte)0x20); // address
+  Serial1.write((byte)0x02); // address
+  Serial1.write((byte)0x00); // value
+  Serial1.write((byte)0x00); // value
+delay(delaytime);  
+    startmillis = currentmillis;  //restart the timer
+  resetbuttonstate = 0;
+  }
 
 //=======write data to DWIN
 
@@ -103,7 +128,7 @@ if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW),
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x00); // address
   Serial1.write((byte)0x00); // value
-  Serial1.write(map(leftpotval, 0, 1023, 0, 255)); // value
+  Serial1.write(map(leftpotval, 0, 1023, 0, 200)); // value
 delay(delaytime);
   //0x1001, right pot value, simulated block height indicator
   Serial1.write((byte)0x5a); // header
@@ -155,13 +180,14 @@ delay(delaytime);
   Serial1.write((byte)0x00); // value
   Serial1.write(but4state); // value
 delay(delaytime);
+
 //request data from DWIN
   Serial1.write((byte)0x5a);  //header
   Serial1.write((byte)0xa5);  //header
   Serial1.write((byte)0x04);  //number of bytes in packet
   Serial1.write((byte)0x83);  //command to read/write
   Serial1.write((byte)0x20);  //address
-  Serial1.write((byte)0x01);  //address
+  Serial1.write((byte)0x02);  //address
   Serial1.write((byte)0x01);  //number of words to return
  
 if(Serial1.available())
@@ -177,8 +203,8 @@ if(Serial1.available())
         {
           case 0x20:   //variable adress?
             Serial.print(" TEST RETURN: "); Serial.println(Buffer[8]);
-            //if (Buffer[8] == 01) {digitalWrite(lock_valve_pin, HIGH);}
-            //  else if (Buffer[8] == 00) {digitalWrite(lock_valve_pin, LOW);}
+            if (Buffer[8] == 01) {resetbuttonstate = 1;}
+            //  else if (Buffer[8] == 00) {resetbuttonstate = 0;}
             break;
         }
       }
