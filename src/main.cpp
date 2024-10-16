@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 /*
+test for git
 default DWIN request 5A A5 04 83 10 01 01
   where 5A and A5 are headers, 04 number of bytes following, 83 request read data, 10 and 01 Vp address and 01 number of words expected
   actual poll request should look like 
