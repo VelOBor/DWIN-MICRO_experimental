@@ -42,9 +42,9 @@ int resetbuttonstate = 0; //DWIN on-screen reset button
 unsigned char Buffer[9]; //for receiving data from DWIN
 int delaytime = 2;
 int delaymillis = 16;
-int resetresetmillis = 10000;
-int startmillis = 0;
-int currentmillis = 0;
+unsigned int reset_height_millis = 10000;
+unsigned long startmillis = 0;
+unsigned long currentmillis = 0;
 
 // put function declarations here:
 //int myFunction(int, int);
@@ -97,9 +97,13 @@ if (but3state == 0) {digitalWrite(g_led_pin, LOW);}
 
 if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW), digitalWrite(g_led_pin, LOW);}
 
- currentmillis = millis();  //get the number of milliseconds since the program started
-  if ((currentmillis - startmillis >= resetresetmillis) && (resetbuttonstate == 1))  //test whether the period has elapsed
-  {
+
+currentmillis = millis();  //get the number of milliseconds since the program started
+  
+if ((currentmillis - startmillis >= reset_height_millis) && (resetbuttonstate == 1))  //test whether the period has elapsed
+  { digitalWrite(r_led_pin, HIGH);
+    
+    /*
     //0x2002, reset the on-screen button to default and the arduino 
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -112,14 +116,11 @@ if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW),
 delay(delaytime);  
     startmillis = currentmillis;  //restart the timer
   resetbuttonstate = 0;
+*/
   }
 
 //=======write data to DWIN
 
-
-//TRY TO ONLY SEND SHIT IF THERE HAS BEEN A CHANGE IN DATA?!?!
-
- 
 //0x1000, left pot value, simulated block speed
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
@@ -202,15 +203,19 @@ if(Serial1.available())
         switch(Buffer[4])
         {
           case 0x20:   //variable adress?
-            Serial.print(" TEST RETURN: "); Serial.println(Buffer[8]);
+            Serial.print(" TEST RETURN: "); Serial.print(Buffer[8]);
             if (Buffer[8] == 01) {resetbuttonstate = 1;}
-            //  else if (Buffer[8] == 00) {resetbuttonstate = 0;}
+            if (Buffer[8] == 00) {resetbuttonstate = 0; startmillis = currentmillis;}
             break;
         }
       }
   }
 delay(delaytime);
 
+//serial debug
+Serial.print("   Startmillis: "); Serial.print(startmillis); Serial.print("  Currentmillis: "); Serial.print(currentmillis);
+
+Serial.println("");
 //end of loop
 }
 
