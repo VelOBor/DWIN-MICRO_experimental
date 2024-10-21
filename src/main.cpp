@@ -34,6 +34,9 @@
 int left_pot_pin = A0;  //левый потенциометр, заменится переменной считающей скорость движения блока
 int right_pot_pin = A1; //правый потенциометр, заменится переменной считающей положение (высоту) блока
 
+int hall_1_in = 14; //вход первого датчика холла (пин 2 наны в экспериментальном режиме)
+int hall_2_in = 15; //вход второго датчика холла (пин 3 наны в экспериментальном режиме)
+
 int r_led_pin = 9;  //красный светодиод, по факту будет сброс высоты блока после удержания кнопки резет на экране
 int y_led_pin = 8;  //жёлтый светодиод, по факту будет реле включения алярмы
 int g_led_pin = 7;  //зелёный светодиод, по факту будет реле разблокировки тормозов барабана
@@ -50,6 +53,16 @@ int but1state = 0;
 int but2state = 0;
 int but3state = 0;
 int but4state = 0;
+
+int hall_1_state = 0;
+int hall_1_ontime = 0;
+int hall_1_offtime = 0;
+int hall_2_state = 0;
+int hall_2_ontime = 0;
+int hall_2_offtime = 0;
+int freq = 0;
+int period = 0;
+int duty = 0;
 
 //==========ОПРЕДЕЛЕНИЯ ПЕРЕМЕННЫХ==========
 int resetbuttonstate = 0; //кнопка сброса высоты на экране DWIN
@@ -73,6 +86,9 @@ void setup() {
   pinMode(left_pot_pin, INPUT);
   pinMode(right_pot_pin, INPUT);
 
+  pinMode(hall_1_in, INPUT);
+  pinMode(hall_2_in, INPUT);
+
   pinMode(but_1_pin, INPUT_PULLUP);
   pinMode(but_2_pin, INPUT_PULLUP);
   pinMode(but_3_pin, INPUT_PULLUP);
@@ -92,16 +108,34 @@ void loop() {
 leftpotval = analogRead(left_pot_pin);
 rightpotval = analogRead(right_pot_pin);
 
+hall_1_state = digitalRead(hall_1_in);
+hall_2_state = digitalRead(hall_2_in);
+
 but1state = !digitalRead(but_1_pin);
 but2state = !digitalRead(but_2_pin);
 but3state = !digitalRead(but_3_pin);
 but4state = !digitalRead(but_4_pin);
 
 //==========ВКЛ-ВЫКЛ ДИОД ДЛЯ ПРОВЕРКИ, ПО ФАКТУ СБРОС ВЫСОТЫ==========
-if (resetbuttonstate == 1) {digitalWrite(r_led_pin, HIGH);}
+if (resetbuttonstate == 1) {digitalWrite(r_led_pin, HIGH);}  //флажок кнопки резет получаем с экрана, смотри код ниже
 if (resetbuttonstate == 0) {digitalWrite(r_led_pin, LOW);}
 
+//==========ВКЛ-ВЫКЛ ДИОДЫ ДЛЯ ПРОВЕРКИ ВХОДОВ С ДАТЧИКОВ ХОЛЛА (СИМУЛЯЦИЯ)==========
+if (hall_1_state == 1) {digitalWrite(r_led_pin, HIGH);}
+if (hall_1_state == 0) {digitalWrite(r_led_pin, LOW);}
+
+if (hall_2_state == 1) {digitalWrite(y_led_pin, HIGH);}
+if (hall_2_state == 0) {digitalWrite(y_led_pin, LOW);}
+
+//==========РАСЧЁТ ЧАСТОТЫ ДАТЧИКОВ ХОЛЛА 1 (СИМУЛЯЦИЯ)==========
+hall_1_ontime = pulseIn(hall_1_in, HIGH);
+hall_1_offtime = pulseIn(hall_1_in, LOW);
+period = hall_1_ontime+hall_1_offtime;
+freq =  1000000.0/period;
+duty = (hall_1_ontime/period)*100;
+
 //==========ВКЛ-ВЫКЛ ДИОДЫ ДЛЯ ПРОВЕРКИ КНОПОК==========
+/*
 if (but1state == 1) {digitalWrite(r_led_pin, HIGH);}
 if (but1state == 0) {digitalWrite(r_led_pin, LOW);}
 
@@ -110,8 +144,9 @@ if (but2state == 0) {digitalWrite(y_led_pin, LOW);}
 
 if (but3state == 1) {digitalWrite(g_led_pin, HIGH);}
 if (but3state == 0) {digitalWrite(g_led_pin, LOW);}
+*/
+if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW), digitalWrite(g_led_pin, LOW);} //на всякий случай если залипнет диод, чтобы можно было выключить програмно
 
-if (but4state == 1) {digitalWrite(r_led_pin, LOW), digitalWrite(y_led_pin, LOW), digitalWrite(g_led_pin, LOW);}
 
 
 //==========ПРОВЕРКА УДЕРЖАНИЯ КНОПКИ СБРОСА ВЫСОТЫ==========
@@ -220,7 +255,7 @@ if(Serial1.available()) //чтение
         switch(Buffer[4]) //если в 4ой ячейке буфера...
         {
           case 0x20:  //...находится искомое число, являющееся адресом искомой переменной (из запроса выше)...
-            Serial.print(" TEST RETURN: "); Serial.print(Buffer[8]);  //выводим на дебаг порт
+            //Serial.print(" TEST RETURN: "); Serial.print(Buffer[8]);  //выводим на дебаг порт
             if (Buffer[8] == 01) {resetbuttonstate = 1;}  //ставим флажок на удержание кнопки резет
             if (Buffer[8] == 00) {resetbuttonstate = 0; startmillis = currentmillis;} //и начинаем отсчёт прежде чем обнулить высоту
             break;
@@ -230,8 +265,11 @@ if(Serial1.available()) //чтение
 delay(delaytime);
 
 //дебаг на ПК
-Serial.print("   Startmillis: "); Serial.print(startmillis); Serial.print("  Currentmillis: "); Serial.print(currentmillis);
-
+//Serial.print(" Start-ms: "); Serial.print(startmillis); Serial.print("  Curr-ms: "); Serial.print(currentmillis);
+Serial.print(" h1Ton: "); Serial.print(hall_1_ontime); Serial.print(" h1Toff: "); Serial.print(hall_1_offtime); 
+Serial.print(" Freq: "); Serial.print(freq); 
+Serial.print(" Duty: "); Serial.print(duty);
+Serial.print(" Period: "); Serial.print(period);
 Serial.println("");
 //end of loop
 }
