@@ -82,6 +82,20 @@ void setup() {
   Serial1.begin(115200);  //для обмена данными с экраном DWIN (пины TX/RX)
   startmillis = millis(); //инициализация таймера
 
+//==========ЗАГРУЗОЧНАЯ ЗАДЕРЖКА, СМЕНА ОБОЕВ==========
+delay(5000); //торомозим на 5сек
+  // меняем обои с картинки 00 на картинку 01
+  Serial1.write((byte)0x5a); // header
+  Serial1.write((byte)0xa5); // header
+  Serial1.write((byte)0x07); // number of bytes being send
+  Serial1.write((byte)0x82); // send/set VP  
+  Serial1.write((byte)0x00); // address
+  Serial1.write((byte)0x84); // address
+  Serial1.write((byte)0x5a); //
+  Serial1.write((byte) 0x01); // 
+  Serial1.write((byte) 0x00); //
+  Serial1.write((byte) 0x01); //смена обоев
+
 //==========ИНИЦИАЛИЗАЦИЯ ПИНОВ==========
   pinMode(left_pot_pin, INPUT);
   pinMode(right_pot_pin, INPUT);
