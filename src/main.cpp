@@ -145,7 +145,7 @@ if (hall_2_state == 0) {digitalWrite(y_led_pin, LOW);}
 hall_1_ontime = pulseIn(hall_1_in, HIGH);
 hall_1_offtime = pulseIn(hall_1_in, LOW);
 period = hall_1_ontime+hall_1_offtime;
-freq =  1000000.0/period;
+freq =  1000000/period;
 duty = (hall_1_ontime/period)*100;
 
 //==========ВКЛ-ВЫКЛ ДИОДЫ ДЛЯ ПРОВЕРКИ КНОПОК==========
