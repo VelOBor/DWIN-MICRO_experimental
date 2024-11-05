@@ -2,14 +2,20 @@
 
 /*
 Иконки и их адреса в DWIN:
-Буровой насос - 1002, его замочек 1006
-Шаровый кран - 1003, его замочек 1007
-Манипулятор - 1004
-Нижний захват - 1005
-Скоростиметр - 1000
-Высотометр - 1001
+Скоростиметр - 1001
+Высотометр - 1002
+Буровой насос - 1003, 
+Шаровый кран - 1004, 
+Манипулятор - 1005
+Нижний захват - 1006
+Timer indikator - 1007
 Алярма - 1008
 
+ 
+Разблокировка Тормоз лебёдки - 2001 (это поле c diginal indicator) при каждом нажатии +10сек 
+                               к разблокировке максимум 60с
+Резет высоты - 2002
+сброс alarm - 2003
 Тормоз лебёдки - 2001 (это КНОПКА или ИНДИКАТОР?)
 Резет высоты - 2002
 
@@ -122,8 +128,8 @@ void loop() {
 leftpotval = analogRead(left_pot_pin);
 rightpotval = analogRead(right_pot_pin);
 
-hall_1_state = digitalRead(hall_1_in);
-hall_2_state = digitalRead(hall_2_in);
+//hall_1_state = digitalRead(hall_1_in);
+//hall_2_state = digitalRead(hall_2_in);
 
 but1state = !digitalRead(but_1_pin);
 but2state = !digitalRead(but_2_pin);
@@ -142,11 +148,11 @@ if (hall_2_state == 1) {digitalWrite(y_led_pin, HIGH);}
 if (hall_2_state == 0) {digitalWrite(y_led_pin, LOW);}
 
 //==========РАСЧЁТ ЧАСТОТЫ ДАТЧИКОВ ХОЛЛА 1 (СИМУЛЯЦИЯ)==========
-hall_1_ontime = pulseIn(hall_1_in, HIGH);
-hall_1_offtime = pulseIn(hall_1_in, LOW);
-period = hall_1_ontime+hall_1_offtime;
-freq =  1000000/period;
-duty = (hall_1_ontime/period)*100;
+//hall_1_ontime = pulseIn(hall_1_in, HIGH);
+//hall_1_offtime = pulseIn(hall_1_in, LOW);
+//period = hall_1_ontime+hall_1_offtime;
+//freq =  1000000/period;
+//duty = (hall_1_ontime/period)*100;
 
 //==========ВКЛ-ВЫКЛ ДИОДЫ ДЛЯ ПРОВЕРКИ КНОПОК==========
 /*
@@ -186,17 +192,7 @@ delay(delaytime);
 
 //==========ОТПРАВКА ДАННЫХ НА ЭКРАН DWIN==========
 
-//0x1000, left pot value, simulated block speed
-  Serial1.write((byte)0x5a); // header
-  Serial1.write((byte)0xa5); // header
-  Serial1.write((byte)0x05); // number of bytes being send
-  Serial1.write((byte)0x82); // send/set VP  
-  Serial1.write((byte)0x10); // address
-  Serial1.write((byte)0x00); // address
-  Serial1.write((byte)0x00); // value
-  Serial1.write(map(leftpotval, 0, 1023, 0, 200)); // value
-delay(delaytime);
-  //0x1001, right pot value, simulated block height indicator
+//0x1001, left pot value, simulated block speed
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
   Serial1.write((byte)0x05); // number of bytes being send
@@ -204,9 +200,12 @@ delay(delaytime);
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x01); // address
   Serial1.write((byte)0x00); // value
-  Serial1.write(map(rightpotval, 0, 1023, 0, 250)); // value
+  Serial1.write(map(leftpotval, 0, 1023, 0, 200)); // value
+  Serial.print("LPV: ");
+  Serial.print(map(leftpotval, 0, 1023, 0, 200));
 delay(delaytime);
-  //0x1002, button 1, simulated pumps state indicator
+
+  //0x1002, right pot value, simulated block height indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
   Serial1.write((byte)0x05); // number of bytes being send
@@ -214,9 +213,12 @@ delay(delaytime);
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x02); // address
   Serial1.write((byte)0x00); // value
-  Serial1.write(but1state); // value
+  Serial1.write(map(rightpotval, 0, 1023, 0, 250)); // value
+  Serial.print(" RPV: ");
+  Serial.println(map(rightpotval, 0, 1023, 0, 250));
 delay(delaytime);
-  //0x1003, button 2, simulated ball valve state indicator
+
+  //0x1003, button 1, simulated pumps state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
   Serial1.write((byte)0x05); // number of bytes being send
@@ -224,9 +226,10 @@ delay(delaytime);
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x03); // address
   Serial1.write((byte)0x00); // value
-  Serial1.write(but2state); // value
+  Serial1.write(but1state); // value
 delay(delaytime);
-  //0x1004, button 3, simulated pipe clamp state indicator
+
+  //0x1004, button 2, simulated ball valve state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
   Serial1.write((byte)0x05); // number of bytes being send
@@ -234,15 +237,27 @@ delay(delaytime);
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x04); // address
   Serial1.write((byte)0x00); // value
-  Serial1.write(but3state); // value
+  Serial1.write(but2state); // value
 delay(delaytime);
-  //0x1005, button 4, simulated lower clamp indicator
+
+  //0x1005, button 3, simulated pipe clamp state indicator
   Serial1.write((byte)0x5a); // header
   Serial1.write((byte)0xa5); // header
   Serial1.write((byte)0x05); // number of bytes being send
   Serial1.write((byte)0x82); // send/set VP  
   Serial1.write((byte)0x10); // address
   Serial1.write((byte)0x05); // address
+  Serial1.write((byte)0x00); // value
+  Serial1.write(but3state); // value
+delay(delaytime);
+
+  //0x1006, button 4, simulated lower clamp indicator
+  Serial1.write((byte)0x5a); // header
+  Serial1.write((byte)0xa5); // header
+  Serial1.write((byte)0x05); // number of bytes being send
+  Serial1.write((byte)0x82); // send/set VP  
+  Serial1.write((byte)0x10); // address
+  Serial1.write((byte)0x06); // address
   Serial1.write((byte)0x00); // value
   Serial1.write(but4state); // value
 delay(delaytime);
@@ -278,7 +293,7 @@ if(Serial1.available()) //чтение
   }
 delay(delaytime);
 
-//дебаг на ПК
+/*/дебаг на ПК
 //Serial.print(" Start-ms: "); Serial.print(startmillis); Serial.print("  Curr-ms: "); Serial.print(currentmillis);
 Serial.print(" h1Ton: "); Serial.print(hall_1_ontime); Serial.print(" h1Toff: "); Serial.print(hall_1_offtime); 
 Serial.print(" Freq: "); Serial.print(freq); 
@@ -286,6 +301,7 @@ Serial.print(" Duty: "); Serial.print(duty);
 Serial.print(" Period: "); Serial.print(period);
 Serial.println("");
 //end of loop
+*/
 }
 
 
